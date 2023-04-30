@@ -15,8 +15,8 @@
 #include "libu.h"
 
 int main() {
-    u64 reserve_size = 1 << 16;
-    u64 commit_size = 1 << 8;
+    u64 reserve_size = 0xFFFFFF;
+    u64 commit_size = 0xFFF;
     char *buf = static_cast<char *>(VirtualReserve(reserve_size));
     for (u64 i = 0; i < reserve_size; i += commit_size) {
 	u64 *local_buf = static_cast<u64 *>(VirtualCommit(commit_size, buf + i));
