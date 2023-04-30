@@ -25,18 +25,18 @@ const File STDERR = {2};
 
 static i32 ConvertProtectionBits(ProtectionBits protection_bits) {
     return
-	(protection_bits & Protection::Read) * PROT_READ |
-	(protection_bits & Protection::Write) * PROT_WRITE |
-	(protection_bits & Protection::Exec) * PROT_EXEC |
-	(protection_bits & Protection::None) * PROT_NONE;
+	!!(protection_bits & Protection::Read) * PROT_READ |
+	!!(protection_bits & Protection::Write) * PROT_WRITE |
+	!!(protection_bits & Protection::Exec) * PROT_EXEC |
+	!!(protection_bits & Protection::None) * PROT_NONE;
 }
 
 static i32 ConvertMappingBits(MappingBits mapping_bits) {
     return
-	(mapping_bits & Mapping::Shared) * MAP_SHARED |
-	(mapping_bits & Mapping::Private) * MAP_PRIVATE |
-	(mapping_bits & Mapping::Fixed) * MAP_FIXED |
-	(mapping_bits & Mapping::Anonymous) * MAP_ANONYMOUS;
+	!!(mapping_bits & Mapping::Shared) * MAP_SHARED |
+	!!(mapping_bits & Mapping::Private) * MAP_PRIVATE |
+	!!(mapping_bits & Mapping::Fixed) * MAP_FIXED |
+	!!(mapping_bits & Mapping::Anonymous) * MAP_ANONYMOUS;
 }
 
 u64 File::size() const {
@@ -65,13 +65,24 @@ std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, 
     return {mapped_file_ptr, file_size};
 }
 
-void *MemoryMapZero(u64 size, void *addr) {
+void MemoryUnmapFile(void *mapped_ptr, u64 mapped_size) {
+    int munmap_code = munmap(mapped_ptr, mapped_size);
+    ASSERT(!munmap_code, "munmap failed");
+}
+
+void *VirtualReserve(u64 size, void *addr) {
     void *mapped_ptr = mmap(addr, size, ConvertProtectionBits(Protection::Read | Protection::Write), ConvertMappingBits(Mapping::Private | Mapping::Anonymous), -1, 0);
     ASSERT(mapped_ptr != MAP_FAILED, "mmap failed");
     return mapped_ptr;
 }
 
-void MemoryUnmap(void *mapped_ptr, u64 mapped_size) {
+void *VirtualCommit([[maybe_unused]] u64 size, void *addr) {
+    return addr;
+}
+
+void VirtualRelease(void *mapped_ptr, u64 mapped_size) {
     int munmap_code = munmap(mapped_ptr, mapped_size);
     ASSERT(!munmap_code, "munmap failed");
 }
+
+void VirtualDecommit([[maybe_unused]] void *mapped_ptr, [[maybe_unused]] u64 mapped_size) {}

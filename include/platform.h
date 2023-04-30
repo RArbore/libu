@@ -14,12 +14,13 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <utility>
 
 #include "include/primitive_types.h"
 #include "include/log.h"
 
-#define PANIC(str) { LogPanic(str, __LINE__, __FUNCTION__, __FILE__); __builtin_trap(); }
+#define PANIC(str) { LogPanic(str, __LINE__, __FUNCTION__, __FILE__); abort(); }
 #define ASSERT(c, str) if (!(c)) PANIC(str)
 
 struct File {
@@ -55,5 +56,9 @@ enum Mapping {
 };
 
 std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits);
-void *MemoryMapZero(u64 size, void *addr = nullptr);
-void MemoryUnmap(void *mapped_ptr, u64 mapped_size);
+void MemoryUnmapFile(void *mapped_ptr, u64 mapped_size);
+
+void *VirtualReserve(u64 size, void *addr = nullptr);
+void *VirtualCommit(u64 size, void *addr);
+void VirtualRelease(void *addr, u64 size);
+void VirtualDecommit(void *addr, u64 size);
