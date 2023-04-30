@@ -31,8 +31,9 @@ BUILD_DIR := build
 SRCS := $(shell find lib -name "*.cc")
 HEADERS := $(shell find include -name "*.h")
 OBJS := $(subst lib/, $(BUILD_DIR)/, $(patsubst %.cc, %.o, $(SRCS)))
+LIB := $(BUILD_DIR)/libu.a
 
-$(BUILD_DIR)/libu.a: $(OBJS)
+$(LIB): $(OBJS)
 	ar -crs $@ $(OBJS)
 
 $(OBJS): $(BUILD_DIR)/%.o: lib/%.cc $(HEADERS) $(BUILD_DIR)
@@ -41,7 +42,10 @@ $(OBJS): $(BUILD_DIR)/%.o: lib/%.cc $(HEADERS) $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+test: $(BUILD_DIR) $(LIB)
+	python3 tests/test_driver.py $(CXX) $(CXXFLAGS) $(WFLAGS)
+
 clean:
 	rm -rf build
 
-.PHONY: clean
+.PHONY: test clean
