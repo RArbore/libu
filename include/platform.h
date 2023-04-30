@@ -51,6 +51,9 @@ enum Mapping {
     Shared = 0x1,
     Private = 0x2,
     Fixed = 0x4,
+    Anonymous = 0x8,
 };
 
 std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits);
+void *MemoryMapZero(u64 size, void *addr = nullptr);
+void MemoryUnmap(void *mapped_ptr, u64 mapped_size);

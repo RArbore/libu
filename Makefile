@@ -24,7 +24,7 @@ else
 	GLSLFLAGS := $(GLSLFLAGS) -g
 endif
 
-CXXFLAGS := $(CXXFLAGS) -fno-rtti -pipe -std=c++20 -I./ -Iinclude/
+CXXFLAGS := $(CXXFLAGS) -fno-rtti -fno-exceptions -pipe -std=c++20 -I./ -Iinclude/
 WFLAGS := $(WFLAGS) -Wall -Wextra -Wshadow -Wconversion -Wpedantic
 
 BUILD_DIR := build

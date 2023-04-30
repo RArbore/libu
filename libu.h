@@ -17,3 +17,4 @@
 #include "include/primitive_types.h"
 #include "include/platform.h"
 #include "include/defer.h"
+#include "include/log.h"
