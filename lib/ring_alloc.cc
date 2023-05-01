@@ -29,11 +29,12 @@ void RingAllocator::Destroy(RingAllocator allocator) {
     VirtualRelease(allocator.backing_buf, allocator.buf_size);
 }
 
-u64 RingAllocator::alloc_raw(u64 bytes) {
+u64 RingAllocator::alloc_raw(u64 bytes, i64 alignment) {
     ASSERT(bytes <= buf_size, "ring allocator isn't large enough for allocation");
-    if (bytes + cursor <= buf_size) {
-	u64 offset = cursor;
-	cursor += bytes;
+    u64 cursor_aligned = (cursor + alignment - 1) & -alignment;
+    if (bytes + cursor_aligned <= buf_size) {
+	u64 offset = cursor_aligned;
+	cursor = cursor_aligned + bytes;
 	return offset;
     } else {
 	cursor = bytes;

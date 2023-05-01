@@ -54,11 +54,11 @@ struct RingAllocator {
 	}
     };
 
-    u64 alloc_raw(u64 bytes);
+    u64 alloc_raw(u64 bytes, i64 alignment);
     
     template<typename T>
     Pointer<T> alloc(u64 num) {
-	u64 offset_bytes = alloc_raw(num * sizeof(T));
+	u64 offset_bytes = alloc_raw(num * sizeof(T), alignof(T));
 	u32 offset_t = static_cast<u32>(offset_bytes / sizeof(T));
 	return {offset_t, generation, *this};
     }
