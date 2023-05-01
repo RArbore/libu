@@ -15,8 +15,9 @@
 #pragma once
 
 #include "include/primitive_types.h"
-#include "include/ring_alloc.h"
 #include "include/bump_alloc.h"
+#include "include/ring_alloc.h"
+#include "include/slab_alloc.h"
 #include "include/platform.h"
 #include "include/defer.h"
 #include "include/log.h"

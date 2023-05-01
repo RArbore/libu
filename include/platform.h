@@ -66,7 +66,7 @@ enum Mapping {
 std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits);
 void MemoryUnmapFile(void *mapped_ptr, u64 mapped_size);
 
-void *VirtualReserve(u64 size, void *addr = nullptr);
+void *VirtualReserve(u64 size, void *addr = nullptr, ProtectionBits protection_bits = Protection::Read | Protection::Write, MappingBits mapping_bits = Mapping::Private | Mapping::Anonymous);
 void *VirtualCommit(u64 size, void *addr);
 void VirtualRelease(void *addr, u64 size);
 void VirtualDecommit(void *addr, u64 size);

@@ -97,8 +97,8 @@ void MemoryUnmapFile(void *mapped_ptr, u64 mapped_size) {
     ASSERT(!munmap_code, "munmap failed");
 }
 
-void *VirtualReserve(u64 size, void *addr) {
-    void *mapped_ptr = mmap(addr, size, ConvertProtectionBits(Protection::Read | Protection::Write), ConvertMappingBits(Mapping::Private | Mapping::Anonymous), -1, 0);
+void *VirtualReserve(u64 size, void *addr, ProtectionBits protection_bits, MappingBits mapping_bits) {
+    void *mapped_ptr = mmap(addr, size, ConvertProtectionBits(protection_bits), ConvertMappingBits(mapping_bits), -1, 0);
     ASSERT(mapped_ptr != MAP_FAILED, "mmap failed");
     return mapped_ptr;
 }
