@@ -32,7 +32,7 @@ struct RingAllocator {
 	u32 generation;
 	RingAllocator &allocator;
 	
-	T& operator* () {
+	T &operator* () {
 	    ASSERT(generation == allocator.generation ||
 		   (generation == allocator.generation - 1 &&
 		    offset >= allocator.cursor),
@@ -41,15 +41,15 @@ struct RingAllocator {
 	    return buf[offset];
 	}
 	
-	T* operator-> () {
+	T *operator-> () {
 	    return &**this;
 	}
 	
-	T& operator[] (u64 idx) {
+	T &operator[] (u64 idx) {
 	    return (&**this)[idx];
 	}
-	
-	operator T*() const {
+
+	T *data() {
 	    return &**this;
 	}
     };

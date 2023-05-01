@@ -14,14 +14,26 @@
 
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
+#include "include/ring_alloc.h"
+#include "include/singleton.h"
 #include "include/platform.h"
 #include "include/defer.h"
 
 const File STDIN = {0};
 const File STDOUT = {1};
 const File STDERR = {2};
+
+static thread_local Singleton<RingAllocator, u64> ring_alloc(4096);
+
+static i32 ConvertFileOpenKind(FileOpenKind kind) {
+    return
+	!!(kind & FileOpenKind::ReadOnly) * (O_RDONLY) |
+	!!(kind & FileOpenKind::ReadWrite) * (O_CREAT | O_RDWR | O_TRUNC);
+}
 
 static i32 ConvertProtectionBits(ProtectionBits protection_bits) {
     return
@@ -39,8 +51,13 @@ static i32 ConvertMappingBits(MappingBits mapping_bits) {
 	!!(mapping_bits & Mapping::Anonymous) * MAP_ANONYMOUS;
 }
 
-File File::Create(std::string_view path) {
-    int fd = -1;
+File File::Create(std::string_view path, FileOpenKind kind) {
+    u64 path_size = path.size() + 1;
+    auto buf = ring_alloc->alloc<char>(path_size);
+    memcpy(buf.data(), path.data(), path.size());
+    buf[path_size] = '\0';
+    int fd = open(buf.data(), ConvertFileOpenKind(kind));
+    ASSERT(fd >= 0, "open failed");
     return {fd};
 }
 

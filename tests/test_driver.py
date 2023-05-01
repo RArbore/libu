@@ -18,11 +18,11 @@ for i, cc_file in enumerate(cc_files):
             status = 2
     
     if status == 0:
-        print("[{}/{}] Test didn't compile.\t\033[91mFAIL\033[00m".format(i+1, len(cc_files)))
+        print("[{}/{}] Test {} didn't compile.\t\033[91mFAIL\033[00m".format(i+1, len(cc_files), cc_file))
     elif status == 1:
-        print("[{}/{}] Test didn't pass.\t\033[91mFAIL\033[00m".format(i+1, len(cc_files)))
+        print("[{}/{}] Test {} didn't pass.\t\033[91mFAIL\033[00m".format(i+1, len(cc_files), cc_file))
     else:
-        print("[{}/{}] Test passed.\t\033[92mSUCCESS\033[00m".format(i+1, len(cc_files)))
+        print("[{}/{}] Test {} passed.\t\033[92mSUCCESS\033[00m".format(i+1, len(cc_files), cc_file))
         succeeded += 1
 
 if succeeded < len(cc_files):

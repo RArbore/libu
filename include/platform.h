@@ -23,12 +23,17 @@
 #define PANIC(str) { LogPanic(str, __LINE__, __FUNCTION__, __FILE__); abort(); }
 #define ASSERT(c, str) if (!(c)) PANIC(str)
 
+enum FileOpenKind {
+    ReadOnly = 0x1,
+    ReadWrite = 0x2,
+};
+
 struct File {
 #ifdef __linux__
     i32 fd;
 #endif
 
-    static File Create(std::string_view path);
+    static File Create(std::string_view path, FileOpenKind kind);
 
     u64 size() const;
     u64 read(void *buf, u64 count) const;
