@@ -28,6 +28,8 @@ struct File {
     i32 fd;
 #endif
 
+    static File Create(std::string_view path);
+
     u64 size() const;
     u64 read(void *buf, u64 count) const;
     u64 write(const void *buf, u64 count) const;

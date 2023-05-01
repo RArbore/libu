@@ -39,6 +39,11 @@ static i32 ConvertMappingBits(MappingBits mapping_bits) {
 	!!(mapping_bits & Mapping::Anonymous) * MAP_ANONYMOUS;
 }
 
+File File::Create(std::string_view path) {
+    int fd = -1;
+    return {fd};
+}
+
 u64 File::size() const {
     struct stat stat;
     int fstat_code = fstat(fd, &stat);

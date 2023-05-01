@@ -12,10 +12,25 @@
  * along with libu. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "libu.h"
 
-#include "include/primitive_types.h"
-#include "include/ring_alloc.h"
-#include "include/platform.h"
-#include "include/defer.h"
-#include "include/log.h"
+int main() {
+    RingAllocator alloc = RingAllocator::Create(4096);
+    auto buf1 = alloc.alloc<u8>(26);
+    auto buf1_raw = &*buf1;
+    for (u8 i = 0; i < 26; ++i) {
+	buf1[i] = i + 'A';
+    }
+    alloc.alloc<u8>(4000);
+    for (u8 i = 0; i < 26; ++i) {
+	ASSERT(buf1[i] == i + 'A', "");
+    }
+    auto buf2 = alloc.alloc<u8>(4000);
+    for (u16 i = 0; i < 4000; ++i) {
+	buf2[i] = 0;
+    }
+    for (u8 i = 0; i < 26; ++i) {
+	ASSERT(buf1_raw[i] == 0, "");
+    }
+    RingAllocator::Destroy(alloc);
+}
