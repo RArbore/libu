@@ -56,15 +56,20 @@ File File::Create(std::string_view path, FileOpenKind kind) {
     auto buf = ring_alloc->alloc<char>(path_size);
     memcpy(buf.data(), path.data(), path.size());
     buf[path_size] = '\0';
-    int fd = open(buf.data(), ConvertFileOpenKind(kind));
+    int fd = open(buf.data(), ConvertFileOpenKind(kind), 0644);
     ASSERT(fd >= 0, "open failed");
     return {fd};
+}
+
+void File::Destroy(File file) {
+    int close_code = close(file.fd);
+    ASSERT(!close_code, "close failed");
 }
 
 u64 File::size() const {
     struct stat stat;
     int fstat_code = fstat(fd, &stat);
-    ASSERT(fstat_code, "fstat failed");
+    ASSERT(!fstat_code, "fstat failed");
     return stat.st_size;
 }
 

@@ -34,6 +34,7 @@ struct File {
 #endif
 
     static File Create(std::string_view path, FileOpenKind kind);
+    static void Destroy(File file);
 
     u64 size() const;
     u64 read(void *buf, u64 count) const;
