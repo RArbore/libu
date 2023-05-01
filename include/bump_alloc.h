@@ -17,26 +17,26 @@
 #include "include/primitive_types.h"
 #include "include/platform.h"
 
-struct RingAllocator {
+struct BumpAllocator {
     void *backing_buf;
-    u64 buf_size;
+    u64 reserved_size;
+    u64 commit_size;
     u64 cursor;
+    u32 blocks_committed;
     u32 generation;
 
-    static RingAllocator Create(u64 size);
-    static void Destroy(RingAllocator allocator);
+    static BumpAllocator Create(u64 reserved_size, u64 commit_size);
+    static void Destroy(BumpAllocator allocator);
 
     template<typename T>
     struct Pointer {
 	u64 offset;
 	u32 generation;
-	RingAllocator &allocator;
+	BumpAllocator &allocator;
 	
 	T &operator* () {
-	    ASSERT(generation == allocator.generation ||
-		   (generation == allocator.generation - 1 &&
-		    offset >= allocator.cursor),
-		   "ring allocator has overwritten memory pointed to");
+	    ASSERT(generation == allocator.generation,
+		   "bump allocator has been freed since pointer was created");
 	    T *buf = reinterpret_cast<T *>(static_cast<u8 *>(allocator.backing_buf) + offset);
 	    return *buf;
 	}
@@ -55,6 +55,8 @@ struct RingAllocator {
     };
 
     u64 alloc_raw(u64 bytes, i64 alignment);
+    void commit_new_blocks(u32 num);
+    void free_all();
     
     template<typename T>
     Pointer<T> alloc(u64 num) {

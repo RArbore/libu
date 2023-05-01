@@ -12,11 +12,29 @@
  * along with libu. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "libu.h"
 
-#include "include/primitive_types.h"
-#include "include/ring_alloc.h"
-#include "include/bump_alloc.h"
-#include "include/platform.h"
-#include "include/defer.h"
-#include "include/log.h"
+int main() {
+    BumpAllocator alloc = BumpAllocator::Create(4096, 4096);
+    auto buf1 = alloc.alloc<u8>(26);
+    auto buf1_raw = &*buf1;
+    for (u8 i = 0; i < 26; ++i) {
+	buf1[i] = i + 'A';
+    }
+    alloc.alloc<u8>(4000);
+    for (u8 i = 0; i < 26; ++i) {
+	ASSERT(buf1[i] == i + 'A', "");
+    }
+    alloc.free_all();
+    auto buf2 = alloc.alloc<u8>(26);
+    for (u8 i = 0; i < 26; ++i) {
+	buf2[i] = i + 'a';
+    }
+    for (u8 i = 0; i < 26; ++i) {
+	ASSERT(buf2[i] == i + 'a', "");
+    }
+    for (u8 i = 0; i < 26; ++i) {
+	ASSERT(buf1_raw[i] == i + 'a', "");
+    }
+    BumpAllocator::Destroy(alloc);
+}
