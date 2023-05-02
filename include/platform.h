@@ -31,6 +31,8 @@ enum FileOpenKind {
 struct File {
 #ifdef __linux__
     i32 fd;
+#elif _WIN32
+    void *handle;
 #endif
 
     static File Create(std::string_view path, FileOpenKind kind);

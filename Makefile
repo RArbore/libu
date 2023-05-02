@@ -17,9 +17,12 @@ OS ?= LINUX
 ifeq ($(OS), WINDOWS)
 	CXX := i686-w64-mingw32-g++
 	AR := i686-w64-mingw32-ar
+	CXXFLAGS := $(CXXFLAGS) -I/usr/x86_64-w64-mingw32/include
+	PLATFORM_SRC := lib/platform_windows.cc
 else
 	CXX := g++
 	AR := ar
+	PLATFORM_SRC := lib/platform_linux.cc
 endif
 
 RELEASE ?= 0
@@ -35,16 +38,20 @@ endif
 CXXFLAGS := $(CXXFLAGS) -fno-rtti -fno-exceptions -pipe -std=c++20 -I./ -Iinclude/
 WFLAGS := $(WFLAGS) -Wall -Wextra -Wshadow -Wconversion -Wpedantic
 
-BUILD_DIR := build
-SRCS := $(shell find lib -name "*.cc")
+BUILD_DIR := build/$(OS)
+SRCS := $(shell find lib -name "*.cc" | grep -v "platform")
 HEADERS := $(shell find include -name "*.h")
 OBJS := $(subst lib/, $(BUILD_DIR)/, $(patsubst %.cc, %.o, $(SRCS)))
+PLATFORM_OBJ := $(subst lib/, $(BUILD_DIR)/, $(patsubst %.cc, %.o, $(PLATFORM_SRC)))
 LIB := $(BUILD_DIR)/libu.a
 
-$(LIB): $(OBJS)
-	$(AR) -crs $@ $(OBJS)
+$(LIB): $(OBJS) $(PLATFORM_OBJ)
+	$(AR) -crs $@ $^
 
 $(OBJS): $(BUILD_DIR)/%.o: lib/%.cc $(HEADERS) $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(WFLAGS) -c $< -o $@
+
+$(PLATFORM_OBJ): $(PLATFORM_SRC) $(HEADERS) $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(WFLAGS) -c $< -o $@
 
 $(BUILD_DIR):
