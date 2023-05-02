@@ -43,9 +43,9 @@ struct File {
     u64 write(const void *buf, u64 count) const;
 };
 
-extern const File STDIN;
-extern const File STDOUT;
-extern const File STDERR;
+extern File STDIN;
+extern File STDOUT;
+extern File STDERR;
 
 using ProtectionBits = u8;
 

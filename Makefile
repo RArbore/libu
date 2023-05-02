@@ -17,7 +17,7 @@ OS ?= LINUX
 ifeq ($(OS), WINDOWS)
 	CXX := i686-w64-mingw32-g++
 	AR := i686-w64-mingw32-ar
-	CXXFLAGS := $(CXXFLAGS) -I/usr/x86_64-w64-mingw32/include
+	CXXFLAGS := $(CXXFLAGS) -isystem /usr/x86_64-w64-mingw32/include
 	PLATFORM_SRC := lib/platform_windows.cc
 else
 	CXX := g++
@@ -58,7 +58,7 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 test: $(BUILD_DIR) $(LIB)
-	python3 tests/test_driver.py $(CXX) $(CXXFLAGS) $(WFLAGS)
+	python3 tests/test_driver.py $(OS) $(CXX) $(CXXFLAGS) $(WFLAGS)
 
 clean:
 	rm -rf build

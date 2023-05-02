@@ -23,9 +23,9 @@
 #include "include/platform.h"
 #include "include/defer.h"
 
-const File STDIN = {0};
-const File STDOUT = {1};
-const File STDERR = {2};
+File STDIN = {0};
+File STDOUT = {1};
+File STDERR = {2};
 
 static thread_local Singleton<RingAllocator, u64> ring_alloc(4096);
 
