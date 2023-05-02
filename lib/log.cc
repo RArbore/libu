@@ -55,3 +55,11 @@ void LogPanic(std::string_view message, u64 line, std::string_view function, std
     Print(buf, ".\n");
     STDERR.write(orig_buf, buf - orig_buf);
 }
+
+void LogSTDOUT(std::string_view message) {
+    STDOUT.write(message.data(), message.size());
+}
+
+void LogSTDERR(std::string_view message) {
+    STDERR.write(message.data(), message.size());
+}

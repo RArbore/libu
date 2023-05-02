@@ -103,7 +103,7 @@ void *VirtualReserve(u64 size, void *addr, ProtectionBits protection_bits, Mappi
     return mapped_ptr;
 }
 
-void *VirtualCommit([[maybe_unused]] u64 size, void *addr) {
+void *VirtualCommit([[maybe_unused]] u64 size, void *addr, [[maybe_unused]] ProtectionBits protection_bits, [[maybe_unused]] MappingBits mapping_bits) {
     return addr;
 }
 

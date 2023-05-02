@@ -17,7 +17,7 @@ OS ?= LINUX
 ifeq ($(OS), WINDOWS)
 	CXX := i686-w64-mingw32-g++
 	AR := i686-w64-mingw32-ar
-	CXXFLAGS := $(CXXFLAGS) -isystem /usr/x86_64-w64-mingw32/include
+	CXXFLAGS := $(CXXFLAGS) -isystem /usr/x86_64-w64-mingw32/include -static -static-libgcc -static-libstdc++
 	PLATFORM_SRC := lib/platform_windows.cc
 else
 	CXX := g++
@@ -42,6 +42,8 @@ BUILD_DIR := build/$(OS)
 SRCS := $(shell find lib -name "*.cc" | grep -v "platform")
 HEADERS := $(shell find include -name "*.h")
 OBJS := $(subst lib/, $(BUILD_DIR)/, $(patsubst %.cc, %.o, $(SRCS)))
+TEST_SRCS := $(shell find tests -name "*.cc")
+TEST_EXES := $(subst tests/, $(BUILD_DIR)/, $(patsubst %.cc, %.cc.out, $(TEST_SRCS)))
 PLATFORM_OBJ := $(subst lib/, $(BUILD_DIR)/, $(patsubst %.cc, %.o, $(PLATFORM_SRC)))
 LIB := $(BUILD_DIR)/libu.a
 
@@ -59,6 +61,11 @@ $(BUILD_DIR):
 
 test: $(BUILD_DIR) $(LIB)
 	python3 tests/test_driver.py $(OS) $(CXX) $(CXXFLAGS) $(WFLAGS)
+
+build_tests: $(LIB) $(TEST_EXES)
+
+$(TEST_EXES): $(BUILD_DIR)/%.cc.out: tests/%.cc $(HEADERS) $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(WFLAGS) $< -o $@ -lu -L$(BUILD_DIR)
 
 clean:
 	rm -rf build

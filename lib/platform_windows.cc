@@ -42,21 +42,52 @@ static std::pair<i32, i32> ConvertFileOpenKind(FileOpenKind kind) {
 	 !!(kind & FileOpenKind::ReadWrite) * (CREATE_ALWAYS)};
 }
 
-/*static i32 ConvertProtectionBits(ProtectionBits protection_bits) {
-    return
-	!!(protection_bits & Protection::Read) * PROT_READ |
-	!!(protection_bits & Protection::Write) * PROT_WRITE |
-	!!(protection_bits & Protection::Exec) * PROT_EXEC |
-	!!(protection_bits & Protection::None) * PROT_NONE;
+static i32 ConvertProtectionBits(ProtectionBits protection_bits) {
+    bool read = !!(protection_bits & Protection::Read);
+    bool write = !!(protection_bits & Protection::Write);
+    bool exec = !!(protection_bits & Protection::Exec);
+    bool none = !!(protection_bits & Protection::None);
+    i32 options[16] = {
+	PAGE_READONLY,
+	PAGE_NOACCESS,
+	PAGE_READWRITE,
+	PAGE_READWRITE,
+	PAGE_EXECUTE_READ,
+	PAGE_EXECUTE,
+	PAGE_EXECUTE_READWRITE,
+	PAGE_EXECUTE_READWRITE,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+	PAGE_NOACCESS,
+    };
+    return options[read + write * 2 + exec * 4 + none * 8];
 }
 
-static i32 ConvertMappingBits(MappingBits mapping_bits) {
-    return
-	!!(mapping_bits & Mapping::Shared) * MAP_SHARED |
-	!!(mapping_bits & Mapping::Private) * MAP_PRIVATE |
-	!!(mapping_bits & Mapping::Fixed) * MAP_FIXED |
-	!!(mapping_bits & Mapping::Anonymous) * MAP_ANONYMOUS;
-	}*/
+static std::pair<i32, i32> ConvertProtectionAndMappingBits(ProtectionBits protection_bits, MappingBits mapping_bits) {
+    bool read = !!(protection_bits & Protection::Read);
+    bool write = !!(protection_bits & Protection::Write);
+    bool exec = !!(protection_bits & Protection::Exec);
+    bool none = !!(protection_bits & Protection::None);
+    int copy = !!(mapping_bits & Mapping::Private) ? FILE_MAP_COPY : 0;
+    if (read && write && !exec && !none) {
+	return {PAGE_READWRITE, FILE_MAP_ALL_ACCESS | copy};
+    } else if (read && !write && !exec && !none) {
+	return {PAGE_READONLY, FILE_MAP_READ | copy};
+    } else if (read && write && exec && !none) {
+	return {PAGE_EXECUTE_READ, FILE_MAP_ALL_ACCESS | FILE_MAP_EXECUTE | copy};
+    } else if (read && !write && exec && !none) {
+	return {PAGE_EXECUTE_READWRITE, FILE_MAP_READ | FILE_MAP_EXECUTE | copy};
+    } else if (exec && !none) {
+	return {PAGE_EXECUTE_READ, FILE_MAP_ALL_ACCESS | FILE_MAP_EXECUTE | copy};
+    } else {
+	PANIC("invalid set of protection bits");
+    }
+}
 
 File File::Create(std::string_view path, FileOpenKind kind) {
     u64 path_size = path.size() + 1;
@@ -106,29 +137,53 @@ u64 File::write(const void *buf, u64 count) const {
     u64 total_bytes_write = 0;
     long unsigned int bytes_write = 0;
     for (u64 i = 0; i < chunks_4gb; ++i) {
-	BOOL write_code = WriteFile(handle, static_cast<char *>(buf) + i * 0xFFFFFFFF, 0xFFFFFFFF, &bytes_write, nullptr);
+	BOOL write_code = WriteFile(handle, static_cast<const char *>(buf) + i * 0xFFFFFFFF, 0xFFFFFFFF, &bytes_write, nullptr);
 	ASSERT(write_code, "WriteFile failed");
 	total_bytes_write += bytes_write;
     }
-    BOOL write_code = WriteFile(handle, static_cast<char *>(buf) + chunks_4gb * 0xFFFFFFFF, below_4gb, &bytes_write, nullptr);
+    BOOL write_code = WriteFile(handle, static_cast<const char *>(buf) + chunks_4gb * 0xFFFFFFFF, below_4gb, &bytes_write, nullptr);
     ASSERT(write_code, "WriteFile failed");
     total_bytes_write += bytes_write;
     return total_bytes_write;
 }
 
 std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits) {
+    u64 file_size = file.size();
+    u64 upper = file_size >> 32;
+    u64 lower = file_size & 0xFFFFFFFF;
+    auto bits = ConvertProtectionAndMappingBits(protection_bits, mapping_bits);
+    HANDLE mapping = CreateFileMappingA(file.handle, nullptr, bits.first, static_cast<u32>(upper), static_cast<u32>(lower), nullptr);
+    ASSERT(mapping, "CreateFileMappingA failed");
+    void *view = MapViewOfFile(mapping, bits.second, 0, 0, static_cast<SIZE_T>(file_size));
+    ASSERT(view, "MapViewOfFile failed");
+    return {view, file_size};
 }
 
 void MemoryUnmapFile(void *mapped_ptr, u64 mapped_size) {
+    BOOL flush_code = FlushViewOfFile(mapped_ptr, static_cast<SIZE_T>(mapped_size));
+    ASSERT(flush_code, "FlushViewOfFile failed");
+    BOOL unmap_code = UnmapViewOfFile(mapped_ptr);
+    ASSERT(unmap_code, "UnmapViewOfFile failed");
 }
 
 void *VirtualReserve(u64 size, void *addr, ProtectionBits protection_bits, MappingBits mapping_bits) {
+    void *reserved = VirtualAlloc(mapping_bits & Mapping::Fixed ? addr : nullptr, static_cast<SIZE_T>(size), MEM_RESERVE, ConvertProtectionBits(protection_bits));
+    ASSERT(reserved, "VirtualAlloc failed");
+    return reserved;
 }
 
-void *VirtualCommit([[maybe_unused]] u64 size, void *addr) {
+void *VirtualCommit(u64 size, void *addr, ProtectionBits protection_bits, MappingBits mapping_bits) {
+    void *reserved = VirtualAlloc(mapping_bits & Mapping::Fixed ? addr : nullptr, static_cast<SIZE_T>(size), MEM_COMMIT, ConvertProtectionBits(protection_bits));
+    ASSERT(reserved, "VirtualAlloc failed");
+    return reserved;
 }
 
 void VirtualRelease(void *mapped_ptr, u64 mapped_size) {
+    BOOL free_code = VirtualFree(mapped_ptr, static_cast<SIZE_T>(mapped_size), MEM_RELEASE);
+    ASSERT(free_code, "VirtualFree failed");
 }
 
-void VirtualDecommit([[maybe_unused]] void *mapped_ptr, [[maybe_unused]] u64 mapped_size) {}
+void VirtualDecommit(void *mapped_ptr, u64 mapped_size) {
+    BOOL free_code = VirtualFree(mapped_ptr, static_cast<SIZE_T>(mapped_size), MEM_DECOMMIT);
+    ASSERT(free_code, "VirtualFree failed");
+}

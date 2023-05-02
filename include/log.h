@@ -17,3 +17,5 @@
 #include "include/primitive_types.h"
 
 void LogPanic(std::string_view message, u64 line, std::string_view function, std::string_view file);
+void LogSTDOUT(std::string_view message);
+void LogSTDERR(std::string_view message);
