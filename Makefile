@@ -12,7 +12,15 @@
 # along with libu. If not, see <https://www.gnu.org/licenses/>.
 # 
 
-CXX := g++
+OS ?= LINUX
+
+ifeq ($(OS), WINDOWS)
+	CXX := i686-w64-mingw32-g++
+	AR := i686-w64-mingw32-ar
+else
+	CXX := g++
+	AR := ar
+endif
 
 RELEASE ?= 0
 
@@ -20,8 +28,8 @@ ifeq ($(RELEASE), 1)
 	CXXFLAGS := $(CXXFLAGS) -Ofast -march=native -DRELEASE
 	LDFLAGS := $(LDFLAGS)
 else
-	CXXFLAGS := $(CXXFLAGS) -g
-	GLSLFLAGS := $(GLSLFLAGS) -g
+	CXXFLAGS := $(CXXFLAGS) -g3
+	GLSLFLAGS := $(GLSLFLAGS) -g3
 endif
 
 CXXFLAGS := $(CXXFLAGS) -fno-rtti -fno-exceptions -pipe -std=c++20 -I./ -Iinclude/
@@ -34,7 +42,7 @@ OBJS := $(subst lib/, $(BUILD_DIR)/, $(patsubst %.cc, %.o, $(SRCS)))
 LIB := $(BUILD_DIR)/libu.a
 
 $(LIB): $(OBJS)
-	ar -crs $@ $(OBJS)
+	$(AR) -crs $@ $(OBJS)
 
 $(OBJS): $(BUILD_DIR)/%.o: lib/%.cc $(HEADERS) $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(WFLAGS) -c $< -o $@
