@@ -113,6 +113,14 @@ u64 File::size() const {
     return static_cast<u64>(size.QuadPart);
 }
 
+void File::truncate(u64 size) const {
+    CheckStdInit();
+    BOOL move_code = SetFilePointerEx(handle, {.QuadPart = static_cast<LONGLONG>(size)}, nullptr, FILE_BEGIN);
+    ASSERT(move_code, "SetFilePointerEx failed");
+    BOOL set_code = SetEndOfFile(handle);
+    ASSERT(set_code, "SetEndOfFile failed");
+}
+
 u64 File::read(void *buf, u64 count) const {
     CheckStdInit();
     u64 chunks_4gb = count / 0xFFFFFFFF;

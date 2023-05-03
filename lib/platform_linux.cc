@@ -73,6 +73,11 @@ u64 File::size() const {
     return stat.st_size;
 }
 
+void File::truncate(u64 size) const {
+    int truncate_code = ftruncate(fd, size);
+    ASSERT(!truncate_code, "ftruncate failed");
+}
+
 u64 File::read(void *buf, u64 count) const {
     i64 read_code = ::read(fd, buf, count);
     ASSERT(read_code >= 0, "read failed");

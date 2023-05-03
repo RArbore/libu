@@ -17,17 +17,34 @@
 #include "libu.h"
 
 int main() {
-    File file1 = File::Create("build/test_file", FileOpenKind::ReadWrite);
+    File file1 = File::Create("build/test_file_a", FileOpenKind::ReadWrite);
     char msg1[] = "This is some test text.";
     u64 bytes_write = file1.write(msg1, sizeof(msg1));
     ASSERT(bytes_write == sizeof(msg1), "");
     ASSERT(file1.size() == sizeof(msg1), "");
     File::Destroy(file1);
 
-    File file2 = File::Create("build/test_file", FileOpenKind::ReadOnly);
+    File file2 = File::Create("build/test_file_a", FileOpenKind::ReadOnly);
     char msg2[sizeof(msg1)];
     u64 bytes_read = file2.read(msg2, sizeof(msg2));
     ASSERT(bytes_read == sizeof(msg2), "");
     ASSERT(!strcmp(msg1, msg2), "");
     File::Destroy(file2);
+
+    File file3 = File::Create("build/test_file_b", FileOpenKind::ReadWrite);
+    file3.truncate(sizeof(msg1));
+    auto [ptr1, msize1] = MemoryMapFile(file3);
+    ASSERT(msize1 == sizeof(msg1), "");
+    ASSERT(file3.size() == sizeof(msg1), "");
+    memcpy(ptr1, msg1, sizeof(msg1));
+    MemoryUnmapFile(ptr1, msize1);
+    File::Destroy(file3);
+
+    File file4 = File::Create("build/test_file_b", FileOpenKind::ReadOnly);
+    auto [ptr2, msize2] = MemoryMapFile(file3, Protection::Read);
+    ASSERT(msize2 == sizeof(msg1), "");
+    ASSERT(file4.size() == sizeof(msg1), "");
+    ASSERT(!strcmp(static_cast<char *>(ptr2), msg1), "");
+    MemoryUnmapFile(ptr2, msize2);
+    File::Destroy(file4);
 }

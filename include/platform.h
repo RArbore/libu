@@ -39,6 +39,7 @@ struct File {
     static void Destroy(File file);
 
     u64 size() const;
+    void truncate(u64 size) const;
     u64 read(void *buf, u64 count) const;
     u64 write(const void *buf, u64 count) const;
 };
@@ -65,7 +66,7 @@ enum Mapping {
     Anonymous = 0x8,
 };
 
-std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits);
+std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits = Protection::Read | Protection::Write, MappingBits mapping_bits = Mapping::Shared);
 void MemoryUnmapFile(void *mapped_ptr, u64 mapped_size);
 
 void *VirtualReserve(u64 size, void *addr = nullptr, ProtectionBits protection_bits = Protection::Read | Protection::Write, MappingBits mapping_bits = Mapping::Private | Mapping::Anonymous);
