@@ -12,23 +12,26 @@
  * along with libu. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <type_traits>
 #include <tuple>
 
 #include <setjmp.h>
 
-#include "include/slab_alloc.h"
+#include "include/primitive_types.h"
+#include "include/platform.h"
 
 #define STACK_SIZE (1 << 12)
 #define COMMIT_SIZE (1 << 15)
 #define RESERVE_SIZE (1 << 20)
 #define YIELD_STACK_SIZE (1 << 10)
+#define RING_ALLOC_SIZE (1 << 10)
 #define INIT_POST_SWITCH_STACK_SIZE 64
 
 void *coroutine_allocate_stack();
-jmp_buf *coroutine_push_yield_stack(jmp_buf *callee_context);
-void coroutine_yield_longjmp();
-
-void yield();
+jmp_buf *coroutine_push_yield_stack(jmp_buf *callee_context, void **ret_loc);
+void coroutine_yield(void *ret);
+void coroutine_yield_longjmp(void *ret);
+void *coroutine_ring_alloc(u64 size, u64 align);
 
 #define get_sp(p) \
   asm volatile("movq %%rsp, %0" : "=r"(p))
@@ -39,9 +42,27 @@ void yield();
 #define set_fp(p) \
   asm volatile("movq %0, %%rbp" : : "r"(p))
 
-template <typename... Args>
+template <typename RTy>
+void yield(RTy ret) {
+    RTy *ret_alloc = reinterpret_cast<RTy *>(coroutine_ring_alloc(sizeof(RTy), alignof(RTy)));
+    *ret_alloc = ret;
+    coroutine_yield(ret_alloc);
+}
+
+inline void yield(void) {
+    void *ret_alloc = reinterpret_cast<void *>(coroutine_ring_alloc(0, 0));
+    coroutine_yield(ret_alloc);
+}
+
+struct YieldStackEntry {
+    jmp_buf *callee_context_ptr;
+    jmp_buf caller_context;
+    void **ret_ptr;
+};
+
+template <typename RTy, typename... Args>
 struct Coroutine {
-    void (*func)(Args...);
+    RTy (*func)(Args...);
     std::tuple<Args...> args;
     void *stack = nullptr;
     bool done = false;
@@ -52,7 +73,7 @@ struct Coroutine {
     void *old_sp = nullptr;
     void *old_fp = nullptr;
 
-    Coroutine(void (*_func)(Args...), Args... _args): func(_func), args({_args...}) {}
+    Coroutine(RTy (*_func)(Args...), Args... _args): func(_func), args({_args...}) {}
 
     void init() {
 	stack = coroutine_allocate_stack();
@@ -71,17 +92,27 @@ struct Coroutine {
 	    set_fp(recovered_this->old_fp);
 	    return;
 	}
-	//(recovered_this->func)(&recovered_this->args);
-	std::apply(recovered_this->func, recovered_this->args);
+	RTy *ret_alloc = nullptr;
+	if constexpr (std::is_same<RTy, void>::value) {
+	    std::apply(recovered_this->func, recovered_this->args);
+	} else {
+	    RTy final_ret = std::apply(recovered_this->func, recovered_this->args);
+	    ret_alloc = reinterpret_cast<RTy *>(coroutine_ring_alloc(sizeof(RTy), alignof(RTy)));
+	    *ret_alloc = final_ret;
+	}
 	recovered_this->done = true;
-	coroutine_yield_longjmp();
+	coroutine_yield_longjmp(ret_alloc);
     }
 
-    void next() {
+    RTy next() {
 	ASSERT(!done, "can't call coroutine after it's finished");
-	jmp_buf *caller_context_ptr = coroutine_push_yield_stack(&callee_context);
+	RTy *ret = nullptr;
+	jmp_buf *caller_context_ptr = coroutine_push_yield_stack(&callee_context, reinterpret_cast<void **>(&ret));
 	if (!setjmp(*caller_context_ptr)) {
 	    longjmp(callee_context, 1);
+	}
+	if constexpr (!std::is_same<RTy, void>::value) {
+	    return *ret;
 	}
     }
 };

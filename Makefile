@@ -28,11 +28,10 @@ endif
 RELEASE ?= 0
 
 ifeq ($(RELEASE), 1)
-	CXXFLAGS := $(CXXFLAGS) -Ofast -march=native -DRELEASE
+	CXXFLAGS := $(CXXFLAGS) -Ofast -march=native -flto -DRELEASE
 	LDFLAGS := $(LDFLAGS)
 else
-	CXXFLAGS := $(CXXFLAGS) -g3
-	GLSLFLAGS := $(GLSLFLAGS) -g3
+	CXXFLAGS := $(CXXFLAGS) -g3 -fsanitize=address -fsanitize=undefined
 endif
 
 CXXFLAGS := $(CXXFLAGS) -fno-rtti -fno-exceptions -pipe -std=c++20 -I./ -Iinclude/

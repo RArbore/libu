@@ -15,7 +15,6 @@
 #include <tuple>
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "libu.h"
 
@@ -38,16 +37,26 @@ void simple_coro2(i32 x, i32 y) {
     }
     int sum = x + y;
     for (int i = 0; i < 8; ++i) {
-	printf("%d\n", fac[i]);
 	sum += fac[i];
 	yield();
     }
-    printf("%d %d %d\n", sum, x, y);
     ASSERT(sum == x + y + 46233, "");
     return;
 }
 
-int main() {
+i32 simple_coro3() {
+    i32 a = 0;
+    i32 b = 1;
+    while (true) {
+	int c = a + b;
+	a = b;
+	b = c;
+	yield(c);
+    }
+    return -1;
+}
+
+i32 main() {
     Coroutine coro1(simple_coro1, 42);
     coro1.init();
     coro1.next();
@@ -60,4 +69,16 @@ int main() {
 	coro2.next();
     }
     ASSERT(coro2.done, "");
+
+    Coroutine coro3(simple_coro3);
+    coro3.init();
+    i32 a = 0;
+    i32 b = 1;
+    for (int i = 0; i < 30; ++i) {
+	int c = a + b;
+	a = b;
+	b = c;
+	int f = coro3.next();
+	ASSERT(f == c, "");
+    }
 }
