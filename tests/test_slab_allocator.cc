@@ -15,15 +15,16 @@
 #include "libu.h"
 
 int main() {
-    SlabAllocator alloc = SlabAllocator::Create(4096, 256, 256);
-    auto buf1 = alloc.alloc<u8>();
+    SlabAllocator alloc1 = SlabAllocator::Create(4096, 256, 256);
+    auto buf1 = alloc1.alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
 	buf1[i] = static_cast<u8>('A' + (i % 10));
     }
     for (u16 i = 0; i < 256; ++i) {
 	ASSERT(buf1[i] == static_cast<u8>('A' + (i % 10)), "");
     }
-    auto buf2 = alloc.alloc<u8>();
+
+    auto buf2 = alloc1.alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
 	buf2[i] = static_cast<u8>('a' + (i % 10));
     }
@@ -33,8 +34,9 @@ int main() {
     for (u16 i = 0; i < 256; ++i) {
 	ASSERT(buf1[i] == static_cast<u8>('A' + (i % 10)), "");
     }
-    alloc.free(buf1);
-    auto buf3 = alloc.alloc<u8>();
+
+    alloc1.free(buf1);
+    auto buf3 = alloc1.alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
 	buf3[i] = static_cast<u8>('a' + (i % 10));
     }
@@ -44,5 +46,14 @@ int main() {
     for (u16 i = 0; i < 256; ++i) {
 	ASSERT(buf1[i] == static_cast<u8>('a' + (i % 10)), "");
     }
-    SlabAllocator::Destroy(alloc);
+    SlabAllocator::Destroy(alloc1);
+
+    SlabAllocator alloc2 = SlabAllocator::Create(1 << 20, 1 << 12, 1 << 8);
+    u64 buf4s_size = (1 << 8) * sizeof(SlabAllocator::Pointer<u8>);
+    SlabAllocator::Pointer<u8> *buf4s = reinterpret_cast<SlabAllocator::Pointer<u8> *>(VirtualReserve(buf4s_size));
+    VirtualCommit(buf4s_size, buf4s);
+    
+    VirtualDecommit(buf4s, buf4s_size);
+    VirtualRelease(buf4s, buf4s_size);
+    SlabAllocator::Destroy(alloc2);
 }

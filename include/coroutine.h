@@ -33,14 +33,14 @@ void coroutine_yield(void *ret);
 void coroutine_yield_longjmp(void *ret);
 void *coroutine_ring_alloc(u64 size, u64 align);
 
-#define get_sp(p) \
-  asm volatile("movq %%rsp, %0" : "=r"(p))
-#define get_fp(p) \
-  asm volatile("movq %%rbp, %0" : "=r"(p))
-#define set_sp(p) \
-  asm volatile("movq %0, %%rsp" : : "r"(p))
-#define set_fp(p) \
-  asm volatile("movq %0, %%rbp" : : "r"(p))
+#define get_sp(p)				\
+    asm volatile("movq %%rsp, %0" : "=r"(p))
+#define get_fp(p)				\
+    asm volatile("movq %%rbp, %0" : "=r"(p))
+#define set_sp(p)				\
+    asm volatile("movq %0, %%rsp" : : "r"(p))
+#define set_fp(p)				\
+    asm volatile("movq %0, %%rbp" : : "r"(p))
 
 template <typename RTy>
 void yield(RTy ret) {

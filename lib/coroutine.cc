@@ -24,6 +24,7 @@ static thread_local u16 yield_stack_top = 0;
 
 static thread_local Singleton<RingAllocator, u64> ring_alloc(RING_ALLOC_SIZE);
 
+#include <stdlib.h>
 void *coroutine_allocate_stack() {
     return reinterpret_cast<void *>(slab_alloc->alloc<u8>().data());
 }

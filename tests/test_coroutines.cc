@@ -15,6 +15,7 @@
 #include <tuple>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "libu.h"
 
