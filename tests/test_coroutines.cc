@@ -12,13 +12,28 @@
  * along with libu. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <tuple>
 
-#include "include/primitive_types.h"
-#include "include/bump_alloc.h"
-#include "include/ring_alloc.h"
-#include "include/slab_alloc.h"
-#include "include/coroutine.h"
-#include "include/platform.h"
-#include "include/defer.h"
-#include "include/log.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "libu.h"
+
+void simple_coro(std::tuple<i32> *args) {
+    LogSTDOUT("simple_coro\n");
+    int x = std::get<0>(*args);
+    x = x + 1;
+    ASSERT(x == 43, "");
+    yield();
+    x = x + 1;
+    ASSERT(x == 44, "");
+    return;
+}
+
+int main() {
+    Coroutine<i32> coro(simple_coro, 42);
+    coro.init();
+    coro.next();
+    coro.next();
+    ASSERT(coro.done, "");
+}
