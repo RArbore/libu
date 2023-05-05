@@ -41,7 +41,7 @@ void yield();
 
 template <typename... Args>
 struct Coroutine {
-    void (*func)(std::tuple<Args...>*);
+    void (*func)(Args...);
     std::tuple<Args...> args;
     void *stack = nullptr;
     bool done = false;
@@ -52,7 +52,7 @@ struct Coroutine {
     void *old_sp = nullptr;
     void *old_fp = nullptr;
 
-    Coroutine(void (*_func)(std::tuple<Args...>*), Args... _args): func(_func), args({_args...}) {}
+    Coroutine(void (*_func)(Args...), Args... _args): func(_func), args({_args...}) {}
 
     void init() {
 	stack = coroutine_allocate_stack();
@@ -71,7 +71,8 @@ struct Coroutine {
 	    set_fp(recovered_this->old_fp);
 	    return;
 	}
-	(recovered_this->func)(&recovered_this->args);
+	//(recovered_this->func)(&recovered_this->args);
+	std::apply(recovered_this->func, recovered_this->args);
 	recovered_this->done = true;
 	coroutine_yield_longjmp();
     }
