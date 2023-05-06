@@ -57,6 +57,24 @@ i32 simple_coro3() {
     return -1;
 }
 
+i32 recursive_coro(i32 x) {
+    if (x == 1) {
+	return 1;
+    }
+    
+    Coroutine coro1(recursive_coro, x - 1);
+    coro1.init();
+    i32 a = coro1.next();
+    ASSERT(coro1.done, "");
+
+    Coroutine coro2(recursive_coro, x - 1);
+    coro2.init();
+    i32 b = coro2.next();
+    ASSERT(coro2.done, "");
+
+    return a + b;
+}
+
 i32 main() {
     Coroutine coro1(simple_coro1, 42);
     coro1.init();
@@ -85,4 +103,10 @@ i32 main() {
 	ASSERT(f == c, "");
     }
     coro3.destroy();
+
+    Coroutine coro4(recursive_coro, 6);
+    coro4.init();
+    int total = coro4.next();
+    ASSERT(total == 32, "");
+    coro4.destroy();
 }

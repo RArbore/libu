@@ -22,7 +22,7 @@
 
 #define STACK_SIZE (1 << 15)
 #define COMMIT_SIZE (1 << 15)
-#define RESERVE_SIZE (1 << 20)
+#define RESERVE_SIZE (1 << 24)
 #define YIELD_STACK_SIZE (1 << 10)
 #define RING_ALLOC_SIZE (1 << 10)
 #define INIT_POST_SWITCH_STACK_SIZE 64
