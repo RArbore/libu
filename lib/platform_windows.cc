@@ -105,7 +105,7 @@ void File::Destroy(File file) {
     ASSERT(close_code, "CloseHandle failed");
 }
 
-u64 File::size() const {
+u64 File::Size() const {
     CheckStdInit();
     LARGE_INTEGER size;
     BOOL size_code = GetFileSizeEx(handle, &size);
@@ -113,7 +113,7 @@ u64 File::size() const {
     return static_cast<u64>(size.QuadPart);
 }
 
-void File::truncate(u64 size) const {
+void File::Truncate(u64 size) const {
     CheckStdInit();
     BOOL move_code = SetFilePointerEx(handle, {.QuadPart = static_cast<LONGLONG>(size)}, nullptr, FILE_BEGIN);
     ASSERT(move_code, "SetFilePointerEx failed");
@@ -121,7 +121,7 @@ void File::truncate(u64 size) const {
     ASSERT(set_code, "SetEndOfFile failed");
 }
 
-u64 File::read(void *buf, u64 count) const {
+u64 File::Read(void *buf, u64 count) const {
     CheckStdInit();
     u64 chunks_4gb = count / 0xFFFFFFFF;
     u32 below_4gb = static_cast<u32>(count % 0xFFFFFFFF);
@@ -138,7 +138,7 @@ u64 File::read(void *buf, u64 count) const {
     return total_bytes_read;
 }
 
-u64 File::write(const void *buf, u64 count) const {
+u64 File::Write(const void *buf, u64 count) const {
     CheckStdInit();
     u64 chunks_4gb = count / 0xFFFFFFFF;
     u32 below_4gb = static_cast<u32>(count % 0xFFFFFFFF);
@@ -156,7 +156,7 @@ u64 File::write(const void *buf, u64 count) const {
 }
 
 std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits) {
-    u64 file_size = file.size();
+    u64 file_size = file.Size();
     u64 upper = file_size >> 32;
     u64 lower = file_size & 0xFFFFFFFF;
     auto bits = ConvertProtectionAndMappingBits(protection_bits, mapping_bits);

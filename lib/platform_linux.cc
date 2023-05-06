@@ -66,32 +66,32 @@ void File::Destroy(File file) {
     ASSERT(!close_code, "close failed");
 }
 
-u64 File::size() const {
+u64 File::Size() const {
     struct stat stat;
     i32 fstat_code = fstat(fd, &stat);
     ASSERT(!fstat_code, "fstat failed");
     return stat.st_size;
 }
 
-void File::truncate(u64 size) const {
+void File::Truncate(u64 size) const {
     i32 truncate_code = ftruncate(fd, size);
     ASSERT(!truncate_code, "ftruncate failed");
 }
 
-u64 File::read(void *buf, u64 count) const {
+u64 File::Read(void *buf, u64 count) const {
     i64 read_code = ::read(fd, buf, count);
     ASSERT(read_code >= 0, "read failed");
     return read_code;
 }
 
-u64 File::write(const void *buf, u64 count) const {
+u64 File::Write(const void *buf, u64 count) const {
     i64 write_code = ::write(fd, buf, count);
     ASSERT(write_code >= 0, "write failed");
     return write_code;
 }
 
 std::pair<void *, u64> MemoryMapFile(File file, ProtectionBits protection_bits, MappingBits mapping_bits) {
-    u64 file_size = file.size();
+    u64 file_size = file.Size();
     void *mapped_file_ptr = mmap(NULL, file_size, ConvertProtectionBits(protection_bits), ConvertMappingBits(mapping_bits), file.fd, 0);
     ASSERT(mapped_file_ptr != MAP_FAILED, "mmap failed");
     return {mapped_file_ptr, file_size};

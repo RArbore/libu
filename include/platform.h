@@ -38,10 +38,10 @@ struct File {
     static File Create(std::string_view path, FileOpenKind kind);
     static void Destroy(File file);
 
-    u64 size() const;
-    void truncate(u64 size) const;
-    u64 read(void *buf, u64 count) const;
-    u64 write(const void *buf, u64 count) const;
+    u64 Size() const;
+    void Truncate(u64 size) const;
+    u64 Read(void *buf, u64 count) const;
+    u64 Write(const void *buf, u64 count) const;
 };
 
 extern File STDIN;
