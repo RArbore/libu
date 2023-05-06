@@ -51,19 +51,19 @@ struct SlabAllocator {
 	}
     };
 
-    u64 alloc_raw();
-    void commit_new_blocks(u32 num);
+    u64 AllocRaw();
+    void CommitNewBlocks(u32 num);
     
     template<typename T>
-    Pointer<T> alloc() {
-	u64 offset_bytes = alloc_raw();
+    Pointer<T> Alloc() {
+	u64 offset_bytes = AllocRaw();
 	return {offset_bytes, this};
     }
 
-    void free(void *ptr);
+    void Free(void *ptr);
     template<typename T>
-    void free(Pointer<T> ptr) {
-	free(ptr.data());
+    void Free(Pointer<T> ptr) {
+	Free(ptr.data());
     }
-    void free_all();
+    void FreeAll();
 };

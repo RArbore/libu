@@ -16,17 +16,17 @@
 
 int main() {
     BumpAllocator alloc = BumpAllocator::Create(4096, 4096);
-    auto buf1 = alloc.alloc<u8>(26);
+    auto buf1 = alloc.Alloc<u8>(26);
     auto buf1_raw = &*buf1;
     for (u8 i = 0; i < 26; ++i) {
 	buf1[i] = i + 'A';
     }
-    alloc.alloc<u8>(4000);
+    alloc.Alloc<u8>(4000);
     for (u8 i = 0; i < 26; ++i) {
 	ASSERT(buf1[i] == i + 'A', "");
     }
-    alloc.free_all();
-    auto buf2 = alloc.alloc<u8>(26);
+    alloc.FreeAll();
+    auto buf2 = alloc.Alloc<u8>(26);
     for (u8 i = 0; i < 26; ++i) {
 	buf2[i] = i + 'a';
     }

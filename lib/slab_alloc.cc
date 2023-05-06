@@ -35,10 +35,10 @@ void SlabAllocator::Destroy(SlabAllocator allocator) {
     VirtualRelease(allocator.backing_buf, allocator.reserved_size);
 }
 
-u64 SlabAllocator::alloc_raw() {
+u64 SlabAllocator::AllocRaw() {
     if (head_free_slab < 0) {
 	i32 prev_num_slabs = static_cast<i32>(blocks_committed * commit_size / slab_size);
-	commit_new_blocks(1);
+	CommitNewBlocks(1);
 	i32 new_num_slabs = static_cast<i32>(blocks_committed * commit_size / slab_size);
 	for (i32 i = prev_num_slabs; i < new_num_slabs; ++i) {
 	    *reinterpret_cast<i32 *>(reinterpret_cast<u8 *>(backing_buf) + i * slab_size) = i + 1 == new_num_slabs ? -1 : i + 1;
@@ -50,19 +50,19 @@ u64 SlabAllocator::alloc_raw() {
     return static_cast<u64>(free_slab * slab_size);
 }
 
-void SlabAllocator::commit_new_blocks(u32 num) {
+void SlabAllocator::CommitNewBlocks(u32 num) {
     for (u32 i = blocks_committed; i < blocks_committed + num; ++i) {
 	VirtualCommit(commit_size, static_cast<char *>(backing_buf) + i * commit_size);
     }
     blocks_committed += num;
 }
 
-void SlabAllocator::free(void *ptr) {
+void SlabAllocator::Free(void *ptr) {
     *reinterpret_cast<i32 *>(ptr) = head_free_slab;
     head_free_slab = static_cast<i32>((reinterpret_cast<u8 *>(ptr) - reinterpret_cast<u8 *>(backing_buf)) / slab_size);
 }
 
-void SlabAllocator::free_all() {
+void SlabAllocator::FreeAll() {
     i32 num_slabs = static_cast<i32>(blocks_committed * commit_size / slab_size);
     for (i32 i = 0; i < num_slabs; ++i) {
 	*reinterpret_cast<i32 *>(static_cast<u8 *>(backing_buf) + i * slab_size) = i + 1 == num_slabs ? -1 : i + 1;

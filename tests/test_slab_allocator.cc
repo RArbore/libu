@@ -18,7 +18,7 @@
 
 int main() {
     SlabAllocator alloc1 = SlabAllocator::Create(4096, 256, 256);
-    auto buf1 = alloc1.alloc<u8>();
+    auto buf1 = alloc1.Alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
 	buf1[i] = static_cast<u8>('A' + (i % 10));
     }
@@ -26,7 +26,7 @@ int main() {
 	ASSERT(buf1[i] == static_cast<u8>('A' + (i % 10)), "");
     }
 
-    auto buf2 = alloc1.alloc<u8>();
+    auto buf2 = alloc1.Alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
 	buf2[i] = static_cast<u8>('a' + (i % 10));
     }
@@ -37,8 +37,8 @@ int main() {
 	ASSERT(buf1[i] == static_cast<u8>('A' + (i % 10)), "");
     }
 
-    alloc1.free(buf1);
-    auto buf3 = alloc1.alloc<u8>();
+    alloc1.Free(buf1);
+    auto buf3 = alloc1.Alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
 	buf3[i] = static_cast<u8>('a' + (i % 10));
     }
@@ -64,7 +64,7 @@ int main() {
 	    permute[i] = (i * n) % num_allocs;
 	}
 	for (u64 i = 0; i < num_allocs; ++i) {
-	    buf4s[permute[i]] = alloc2.alloc<u8>();
+	    buf4s[permute[i]] = alloc2.Alloc<u8>();
 	    memset(buf4s[permute[i]].data(), n, slab_size);
 	}
 	for (u64 i = 0; i < num_allocs; ++i) {
@@ -73,7 +73,7 @@ int main() {
 		code |= buf4s[i][j] != n;
 	    }
 	    ASSERT(!code, "");
-	    alloc2.free(buf4s[i]);
+	    alloc2.Free(buf4s[i]);
 	}
     }
     VirtualDecommit(buf4s, buf4s_size);

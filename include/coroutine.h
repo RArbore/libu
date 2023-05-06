@@ -27,32 +27,32 @@
 #define RING_ALLOC_SIZE (1 << 10)
 #define INIT_POST_SWITCH_STACK_SIZE 64
 
-void *coroutine_allocate_stack();
-void coroutine_destroy_stack(void *stack);
-jmp_buf *coroutine_push_yield_stack(jmp_buf *callee_context, void **ret_loc);
-void coroutine_yield(void *ret);
-void coroutine_yield_longjmp(void *ret);
-void *coroutine_ring_alloc(u64 size, u64 align);
+void *CoroutineAllocateStack();
+void CoroutineDestroyStack(void *stack);
+jmp_buf *CoroutinePushYieldStack(jmp_buf *callee_context, void **ret_loc);
+void CoroutineYield(void *ret);
+void CoroutineYieldLongjmp(void *ret);
+void *CoroutineRingAlloc(u64 size, u64 align);
 
-#define get_sp(p)				\
+#define GetSP(p)				\
     asm volatile("movq %%rsp, %0" : "=r"(p))
-#define get_fp(p)				\
+#define GetFP(p)				\
     asm volatile("movq %%rbp, %0" : "=r"(p))
-#define set_sp(p)				\
+#define SetSP(p)				\
     asm volatile("movq %0, %%rsp" : : "r"(p))
-#define set_fp(p)				\
+#define SetFP(p)				\
     asm volatile("movq %0, %%rbp" : : "r"(p))
 
 template <typename RTy>
-void yield(RTy ret) {
-    RTy *ret_alloc = reinterpret_cast<RTy *>(coroutine_ring_alloc(sizeof(RTy), alignof(RTy)));
+void Yield(RTy ret) {
+    RTy *ret_alloc = reinterpret_cast<RTy *>(CoroutineRingAlloc(sizeof(RTy), alignof(RTy)));
     *ret_alloc = ret;
-    coroutine_yield(ret_alloc);
+    CoroutineYield(ret_alloc);
 }
 
-inline void yield(void) {
-    void *ret_alloc = reinterpret_cast<void *>(coroutine_ring_alloc(0, 0));
-    coroutine_yield(ret_alloc);
+inline void Yield(void) {
+    void *ret_alloc = reinterpret_cast<void *>(CoroutineRingAlloc(0, 0));
+    CoroutineYield(ret_alloc);
 }
 
 struct YieldStackEntry {
@@ -74,23 +74,24 @@ struct Coroutine {
     void *old_sp = nullptr;
     void *old_fp = nullptr;
 
-    Coroutine(RTy (*_func)(Args...), Args... _args): func(_func), args({_args...}) {}
+    Coroutine(RTy (*_func)(Args...)): func(_func) {}
 
-    void init() {
-	stack = coroutine_allocate_stack();
+    void Create(Args... _args) {
+	args = {_args...};
+	stack = CoroutineAllocateStack();
 	u8 *top_of_stack = reinterpret_cast<u8 *>(stack) + STACK_SIZE;
 	*reinterpret_cast<decltype(this)*>(top_of_stack) = this;
-	get_sp(old_sp);
-	get_fp(old_fp);
+	GetSP(old_sp);
+	GetFP(old_fp);
 
-	set_sp(top_of_stack - INIT_POST_SWITCH_STACK_SIZE);
-	set_fp(top_of_stack);
-	get_fp(top_of_stack);
+	SetSP(top_of_stack - INIT_POST_SWITCH_STACK_SIZE);
+	SetFP(top_of_stack);
+	GetFP(top_of_stack);
 	decltype(this) recovered_this = *reinterpret_cast<decltype(this)*>(top_of_stack);
 
 	if (!setjmp(recovered_this->callee_context)) {
-	    set_sp(recovered_this->old_sp);
-	    set_fp(recovered_this->old_fp);
+	    SetSP(recovered_this->old_sp);
+	    SetFP(recovered_this->old_fp);
 	    return;
 	}
 	RTy *ret_alloc = nullptr;
@@ -98,17 +99,17 @@ struct Coroutine {
 	    std::apply(recovered_this->func, recovered_this->args);
 	} else {
 	    RTy final_ret = std::apply(recovered_this->func, recovered_this->args);
-	    ret_alloc = reinterpret_cast<RTy *>(coroutine_ring_alloc(sizeof(RTy), alignof(RTy)));
+	    ret_alloc = reinterpret_cast<RTy *>(CoroutineRingAlloc(sizeof(RTy), alignof(RTy)));
 	    *ret_alloc = final_ret;
 	}
 	recovered_this->done = true;
-	coroutine_yield_longjmp(ret_alloc);
+	CoroutineYieldLongjmp(ret_alloc);
     }
 
-    RTy next() {
+    RTy Next() {
 	ASSERT(!done, "can't call coroutine after it's finished");
 	RTy *ret = nullptr;
-	jmp_buf *caller_context_ptr = coroutine_push_yield_stack(&callee_context, reinterpret_cast<void **>(&ret));
+	jmp_buf *caller_context_ptr = CoroutinePushYieldStack(&callee_context, reinterpret_cast<void **>(&ret));
 	if (!setjmp(*caller_context_ptr)) {
 	    longjmp(callee_context, 1);
 	}
@@ -117,7 +118,7 @@ struct Coroutine {
 	}
     }
 
-    void destroy() {
-	coroutine_destroy_stack(stack);
+    void Destroy() {
+	CoroutineDestroyStack(stack);
     }
 };

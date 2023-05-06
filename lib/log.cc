@@ -42,7 +42,7 @@ static void Print(char *&buf, u64 fixed) {
 }
 
 void LogPanic(std::string_view message, u64 line, std::string_view function, std::string_view file) {
-    char *orig_buf = ring_alloc->alloc<char>(4096).data();
+    char *orig_buf = ring_alloc->Alloc<char>(4096).data();
     char *buf = orig_buf;
     Print(buf, "PANIC: \"");
     Print(buf, message);

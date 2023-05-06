@@ -22,7 +22,7 @@
 void simple_coro1(i32 arg) {
     int x = arg + 1;
     ASSERT(x == 43, "");
-    yield();
+    Yield();
     x = x + 1;
     ASSERT(x == 44, "");
     return;
@@ -34,12 +34,12 @@ void simple_coro2(i32 x, i32 y) {
     for (int i = 1; i < 8; ++i) {
 	fac[i] = fac[i - 1] * (i + 1);
 	ASSERT(fac[i] == fac[i - 1] * (i + 1), "");
-	yield();
+	Yield();
     }
     int sum = x + y;
     for (int i = 0; i < 8; ++i) {
 	sum += fac[i];
-	yield();
+	Yield();
     }
     ASSERT(sum == x + y + 46233, "");
     return;
@@ -52,7 +52,7 @@ i32 simple_coro3() {
 	int c = a + b;
 	a = b;
 	b = c;
-	yield(c);
+	Yield(c);
     }
     return -1;
 }
@@ -62,51 +62,51 @@ i32 recursive_coro(i32 x) {
 	return 1;
     }
     
-    Coroutine coro1(recursive_coro, x - 1);
-    coro1.init();
-    i32 a = coro1.next();
+    Coroutine coro1(recursive_coro);
+    coro1.Create(x - 1);
+    i32 a = coro1.Next();
     ASSERT(coro1.done, "");
 
-    Coroutine coro2(recursive_coro, x - 1);
-    coro2.init();
-    i32 b = coro2.next();
+    Coroutine coro2(recursive_coro);
+    coro2.Create(x - 1);
+    i32 b = coro2.Next();
     ASSERT(coro2.done, "");
 
     return a + b;
 }
 
 i32 main() {
-    Coroutine coro1(simple_coro1, 42);
-    coro1.init();
-    coro1.next();
-    coro1.next();
-    coro1.destroy();
+    Coroutine coro1(simple_coro1);
+    coro1.Create(42);
+    coro1.Next();
+    coro1.Next();
+    coro1.Destroy();
     ASSERT(coro1.done, "");
 
-    Coroutine coro2(simple_coro2, 102, 489);
-    coro2.init();
+    Coroutine coro2(simple_coro2);
+    coro2.Create(102, 489);
     for (int i = 0; i < 16; ++i) {
-	coro2.next();
+	coro2.Next();
     }
-    coro2.destroy();
+    coro2.Destroy();
     ASSERT(coro2.done, "");
 
     Coroutine coro3(simple_coro3);
-    coro3.init();
+    coro3.Create();
     i32 a = 0;
     i32 b = 1;
     for (int i = 0; i < 30; ++i) {
 	int c = a + b;
 	a = b;
 	b = c;
-	int f = coro3.next();
+	int f = coro3.Next();
 	ASSERT(f == c, "");
     }
-    coro3.destroy();
+    coro3.Destroy();
 
-    Coroutine coro4(recursive_coro, 6);
-    coro4.init();
-    int total = coro4.next();
+    Coroutine coro4(recursive_coro);
+    coro4.Create(6);
+    int total = coro4.Next();
     ASSERT(total == 32, "");
-    coro4.destroy();
+    coro4.Destroy();
 }

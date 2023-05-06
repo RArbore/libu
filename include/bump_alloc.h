@@ -54,13 +54,13 @@ struct BumpAllocator {
 	}
     };
 
-    u64 alloc_raw(u64 bytes, i64 alignment);
-    void commit_new_blocks(u32 num);
-    void free_all();
+    u64 AllocRaw(u64 bytes, i64 alignment);
+    void CommitNewBlocks(u32 num);
+    void FreeAll();
     
     template<typename T>
-    Pointer<T> alloc(u64 num) {
-	u64 offset_bytes = alloc_raw(num * sizeof(T), alignof(T));
+    Pointer<T> Alloc(u64 num) {
+	u64 offset_bytes = AllocRaw(num * sizeof(T), alignof(T));
 	return {offset_bytes, generation, *this};
     }
 };

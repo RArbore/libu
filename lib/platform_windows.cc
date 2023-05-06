@@ -91,7 +91,7 @@ static std::pair<i32, i32> ConvertProtectionAndMappingBits(ProtectionBits protec
 
 File File::Create(std::string_view path, FileOpenKind kind) {
     u64 path_size = path.size() + 1;
-    auto buf = ring_alloc->alloc<char>(path_size);
+    auto buf = ring_alloc->Alloc<char>(path_size);
     memcpy(buf.data(), path.data(), path.size());
     buf[path_size] = '\0';
     auto bits = ConvertFileOpenKind(kind);

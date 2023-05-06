@@ -32,26 +32,26 @@ void BumpAllocator::Destroy(BumpAllocator allocator) {
     VirtualRelease(allocator.backing_buf, allocator.reserved_size);
 }
 
-u64 BumpAllocator::alloc_raw(u64 bytes, i64 alignment) {
+u64 BumpAllocator::AllocRaw(u64 bytes, i64 alignment) {
     u64 cursor_aligned = (cursor + alignment - 1) & -alignment;
     ASSERT(cursor_aligned + bytes <= reserved_size, "bump allocator isn't large enough for allocation");
     i64 spill = cursor_aligned + bytes - blocks_committed * commit_size;
     if (spill > 0) {
-	commit_new_blocks(static_cast<u32>((spill + commit_size - 1) / commit_size));
+	CommitNewBlocks(static_cast<u32>((spill + commit_size - 1) / commit_size));
     }
     u64 offset = cursor_aligned;
     cursor = cursor_aligned + bytes;
     return offset;
 }
 
-void BumpAllocator::commit_new_blocks(u32 num) {
+void BumpAllocator::CommitNewBlocks(u32 num) {
     for (u32 i = blocks_committed; i < blocks_committed + num; ++i) {
 	VirtualCommit(commit_size, static_cast<char *>(backing_buf) + i * commit_size);
     }
     blocks_committed += num;
 }
 
-void BumpAllocator::free_all() {
+void BumpAllocator::FreeAll() {
     cursor = 0;
     ++generation;
 }

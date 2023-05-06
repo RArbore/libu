@@ -19,41 +19,41 @@
 #include "include/log.h"
 
 static thread_local Singleton<SlabAllocator, u64, u64, u32> slab_alloc(RESERVE_SIZE, COMMIT_SIZE, STACK_SIZE);
-static thread_local YieldStackEntry yield_stack[YIELD_STACK_SIZE];
-static thread_local u16 yield_stack_top = 0;
+static thread_local YieldStackEntry Yield_stack[YIELD_STACK_SIZE];
+static thread_local u16 Yield_stack_top = 0;
 
 static thread_local Singleton<RingAllocator, u64> ring_alloc(RING_ALLOC_SIZE);
 
-void *coroutine_allocate_stack() {
-    return reinterpret_cast<void *>(slab_alloc->alloc<u8>().data());
+void *CoroutineAllocateStack() {
+    return reinterpret_cast<void *>(slab_alloc->Alloc<u8>().data());
 }
 
-void coroutine_destroy_stack(void *stack) {
-    slab_alloc->free(stack);
+void CoroutineDestroyStack(void *stack) {
+    slab_alloc->Free(stack);
 }
 
-jmp_buf *coroutine_push_yield_stack(jmp_buf *callee_context, void **ret_loc) {
-    yield_stack[yield_stack_top].callee_context_ptr = callee_context;
-    jmp_buf *caller_context_ptr = &yield_stack[yield_stack_top].caller_context;
-    yield_stack[yield_stack_top].ret_ptr = ret_loc;
-    ++yield_stack_top;
+jmp_buf *CoroutinePushYieldStack(jmp_buf *callee_context, void **ret_loc) {
+    Yield_stack[Yield_stack_top].callee_context_ptr = callee_context;
+    jmp_buf *caller_context_ptr = &Yield_stack[Yield_stack_top].caller_context;
+    Yield_stack[Yield_stack_top].ret_ptr = ret_loc;
+    ++Yield_stack_top;
     return caller_context_ptr;
 }
 
-void coroutine_yield(void *ret) {
-    ASSERT(yield_stack_top, "cannot yield when there are no contexts on the yield stack");
-    if (!setjmp(*yield_stack[yield_stack_top - 1].callee_context_ptr)) {
-	coroutine_yield_longjmp(ret);
+void CoroutineYield(void *ret) {
+    ASSERT(Yield_stack_top, "cannot Yield when there are no contexts on the Yield stack");
+    if (!setjmp(*Yield_stack[Yield_stack_top - 1].callee_context_ptr)) {
+	CoroutineYieldLongjmp(ret);
     }
 }
 
-void coroutine_yield_longjmp(void *ret) {
-    ASSERT(yield_stack_top, "cannot yield when there are no contexts on the yield stack");
-    --yield_stack_top;
-    *yield_stack[yield_stack_top].ret_ptr = ret;
-    longjmp(yield_stack[yield_stack_top].caller_context, 1);
+void CoroutineYieldLongjmp(void *ret) {
+    ASSERT(Yield_stack_top, "cannot Yield when there are no contexts on the Yield stack");
+    --Yield_stack_top;
+    *Yield_stack[Yield_stack_top].ret_ptr = ret;
+    longjmp(Yield_stack[Yield_stack_top].caller_context, 1);
 }
 
-void *coroutine_ring_alloc(u64 size, u64 align) {
-    return reinterpret_cast<u8 *>(ring_alloc->backing_buf) + ring_alloc->alloc_raw(size, align);
+void *CoroutineRingAlloc(u64 size, u64 align) {
+    return reinterpret_cast<u8 *>(ring_alloc->backing_buf) + ring_alloc->AllocRaw(size, align);
 }
