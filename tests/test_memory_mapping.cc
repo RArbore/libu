@@ -14,7 +14,7 @@
 
 #include "libu.h"
 
-int main() {
+i32 main() {
     u64 reserve1_size = 0xFFFFFF;
     u64 commit1_size = 0xFFF;
     u8 *buf1 = static_cast<u8 *>(VirtualReserve(reserve1_size));

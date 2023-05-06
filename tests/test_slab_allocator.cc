@@ -16,7 +16,7 @@
 
 #include "libu.h"
 
-int main() {
+i32 main() {
     SlabAllocator alloc1 = SlabAllocator::Create(4096, 256, 256);
     auto buf1 = alloc1.Alloc<u8>();
     for (u16 i = 0; i < 256; ++i) {
@@ -68,7 +68,7 @@ int main() {
 	    memset(buf4s[permute[i]].data(), n, slab_size);
 	}
 	for (u64 i = 0; i < num_allocs; ++i) {
-	    int code = 0;
+	    i32 code = 0;
 	    for (u64 j = 0; j < slab_size; ++j) {
 		code |= buf4s[i][j] != n;
 	    }

@@ -73,7 +73,7 @@ static std::pair<i32, i32> ConvertProtectionAndMappingBits(ProtectionBits protec
     bool write = !!(protection_bits & Protection::Write);
     bool exec = !!(protection_bits & Protection::Exec);
     bool none = !!(protection_bits & Protection::None);
-    int copy = !!(mapping_bits & Mapping::Private) ? FILE_MAP_COPY : 0;
+    i32 copy = !!(mapping_bits & Mapping::Private) ? FILE_MAP_COPY : 0;
     if (read && write && !exec && !none) {
 	return {PAGE_READWRITE, FILE_MAP_ALL_ACCESS | copy};
     } else if (read && !write && !exec && !none) {

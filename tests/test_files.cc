@@ -16,7 +16,7 @@
 
 #include "libu.h"
 
-int main() {
+i32 main() {
     File file1 = File::Create("build/test_file_a", FileOpenKind::ReadWrite);
     char msg1[] = "This is some test text.";
     u64 bytes_write = file1.write(msg1, sizeof(msg1));

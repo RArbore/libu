@@ -20,7 +20,7 @@
 #include "libu.h"
 
 void simple_coro1(i32 arg) {
-    int x = arg + 1;
+    i32 x = arg + 1;
     ASSERT(x == 43, "");
     Yield();
     x = x + 1;
@@ -29,15 +29,15 @@ void simple_coro1(i32 arg) {
 }
 
 void simple_coro2(i32 x, i32 y) {
-    int fac[8];
+    i32 fac[8];
     fac[0] = 1;
-    for (int i = 1; i < 8; ++i) {
+    for (i32 i = 1; i < 8; ++i) {
 	fac[i] = fac[i - 1] * (i + 1);
 	ASSERT(fac[i] == fac[i - 1] * (i + 1), "");
 	Yield();
     }
-    int sum = x + y;
-    for (int i = 0; i < 8; ++i) {
+    i32 sum = x + y;
+    for (i32 i = 0; i < 8; ++i) {
 	sum += fac[i];
 	Yield();
     }
@@ -49,7 +49,7 @@ i32 simple_coro3() {
     i32 a = 0;
     i32 b = 1;
     while (true) {
-	int c = a + b;
+	i32 c = a + b;
 	a = b;
 	b = c;
 	Yield(c);
@@ -85,7 +85,7 @@ i32 main() {
 
     Coroutine coro2(simple_coro2);
     coro2.Create(102, 489);
-    for (int i = 0; i < 16; ++i) {
+    for (i32 i = 0; i < 16; ++i) {
 	coro2.Next();
     }
     coro2.Destroy();
@@ -95,18 +95,18 @@ i32 main() {
     coro3.Create();
     i32 a = 0;
     i32 b = 1;
-    for (int i = 0; i < 30; ++i) {
-	int c = a + b;
+    for (i32 i = 0; i < 30; ++i) {
+	i32 c = a + b;
 	a = b;
 	b = c;
-	int f = coro3.Next();
+	i32 f = coro3.Next();
 	ASSERT(f == c, "");
     }
     coro3.Destroy();
 
     Coroutine coro4(recursive_coro);
     coro4.Create(6);
-    int total = coro4.Next();
+    i32 total = coro4.Next();
     ASSERT(total == 32, "");
     coro4.Destroy();
 }

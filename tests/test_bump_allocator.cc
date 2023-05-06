@@ -14,7 +14,7 @@
 
 #include "libu.h"
 
-int main() {
+i32 main() {
     BumpAllocator alloc = BumpAllocator::Create(4096, 4096);
     auto buf1 = alloc.Alloc<u8>(26);
     auto buf1_raw = &*buf1;
