@@ -20,7 +20,7 @@
 #include "include/primitive_types.h"
 #include "include/platform.h"
 
-#define STACK_SIZE (1 << 12)
+#define STACK_SIZE (1 << 15)
 #define COMMIT_SIZE (1 << 15)
 #define RESERVE_SIZE (1 << 20)
 #define YIELD_STACK_SIZE (1 << 10)
@@ -28,6 +28,7 @@
 #define INIT_POST_SWITCH_STACK_SIZE 64
 
 void *coroutine_allocate_stack();
+void coroutine_destroy_stack(void *stack);
 jmp_buf *coroutine_push_yield_stack(jmp_buf *callee_context, void **ret_loc);
 void coroutine_yield(void *ret);
 void coroutine_yield_longjmp(void *ret);
@@ -114,5 +115,9 @@ struct Coroutine {
 	if constexpr (!std::is_same<RTy, void>::value) {
 	    return *ret;
 	}
+    }
+
+    void destroy() {
+	coroutine_destroy_stack(stack);
     }
 };

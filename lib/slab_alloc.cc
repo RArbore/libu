@@ -39,14 +39,14 @@ u64 SlabAllocator::alloc_raw() {
     if (head_free_slab < 0) {
 	i32 prev_num_slabs = static_cast<i32>(blocks_committed * commit_size / slab_size);
 	commit_new_blocks(1);
-	i32 new_num_slabs = static_cast<i32>(commit_size / slab_size);
+	i32 new_num_slabs = static_cast<i32>(blocks_committed * commit_size / slab_size);
 	for (i32 i = prev_num_slabs; i < new_num_slabs; ++i) {
-	    *reinterpret_cast<i32 *>(static_cast<u8 *>(backing_buf) + i * slab_size) = i + 1 == new_num_slabs ? -1 : i + 1;
+	    *reinterpret_cast<i32 *>(reinterpret_cast<u8 *>(backing_buf) + i * slab_size) = i + 1 == new_num_slabs ? -1 : i + 1;
 	}
 	head_free_slab = prev_num_slabs;
     }
     i32 free_slab = head_free_slab;
-    head_free_slab = *reinterpret_cast<i32 *>(static_cast<u8 *>(backing_buf) + free_slab * slab_size);
+    head_free_slab = *reinterpret_cast<i32 *>(reinterpret_cast<u8 *>(backing_buf) + free_slab * slab_size);
     return static_cast<u64>(free_slab * slab_size);
 }
 

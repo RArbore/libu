@@ -12,6 +12,8 @@
  * along with libu. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "libu.h"
 
 int main() {
@@ -48,11 +50,32 @@ int main() {
     }
     SlabAllocator::Destroy(alloc1);
 
-    SlabAllocator alloc2 = SlabAllocator::Create(1 << 20, 1 << 12, 1 << 8);
-    u64 buf4s_size = (1 << 8) * sizeof(SlabAllocator::Pointer<u8>);
+    constexpr u32 slab_size = 1 << 8;
+    constexpr u64 num_allocs = 1 << 8;
+    SlabAllocator alloc2 = SlabAllocator::Create(1 << 20, 1 << 12, slab_size);
+    u64 buf4s_size = num_allocs * sizeof(SlabAllocator::Pointer<u8>);
     SlabAllocator::Pointer<u8> *buf4s = reinterpret_cast<SlabAllocator::Pointer<u8> *>(VirtualReserve(buf4s_size));
     VirtualCommit(buf4s_size, buf4s);
-    
+    u64 permute[num_allocs];
+    i32 primes[16] = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59};
+    for (u64 p = 0; p < 16; ++p) {
+	i32 n = primes[p];
+	for (u64 i = 0; i < num_allocs; ++i) {
+	    permute[i] = (i * n) % num_allocs;
+	}
+	for (u64 i = 0; i < num_allocs; ++i) {
+	    buf4s[permute[i]] = alloc2.alloc<u8>();
+	    memset(buf4s[permute[i]].data(), n, slab_size);
+	}
+	for (u64 i = 0; i < num_allocs; ++i) {
+	    int code = 0;
+	    for (u64 j = 0; j < slab_size; ++j) {
+		code |= buf4s[i][j] != n;
+	    }
+	    ASSERT(!code, "");
+	    alloc2.free(buf4s[i]);
+	}
+    }
     VirtualDecommit(buf4s, buf4s_size);
     VirtualRelease(buf4s, buf4s_size);
     SlabAllocator::Destroy(alloc2);

@@ -30,7 +30,7 @@ int main() {
     }
     VirtualRelease(buf1, reserve1_size);
 
-    u64 reserve2_size = 0xFFFFFFF;
+    u64 reserve2_size = 0xFFFFFF;
     u8 *buf2 = static_cast<u8 *>(VirtualReserve(reserve2_size));
     VirtualCommit(reserve2_size, buf2);
     for (u64 j = 0; j < reserve2_size; ++j) {

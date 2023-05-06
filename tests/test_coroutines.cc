@@ -62,6 +62,7 @@ i32 main() {
     coro1.init();
     coro1.next();
     coro1.next();
+    coro1.destroy();
     ASSERT(coro1.done, "");
 
     Coroutine coro2(simple_coro2, 102, 489);
@@ -69,6 +70,7 @@ i32 main() {
     for (int i = 0; i < 16; ++i) {
 	coro2.next();
     }
+    coro2.destroy();
     ASSERT(coro2.done, "");
 
     Coroutine coro3(simple_coro3);
@@ -82,4 +84,5 @@ i32 main() {
 	int f = coro3.next();
 	ASSERT(f == c, "");
     }
+    coro3.destroy();
 }

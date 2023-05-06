@@ -31,10 +31,10 @@ struct SlabAllocator {
     template<typename T>
     struct Pointer {
 	u64 offset;
-	SlabAllocator &allocator;
+	SlabAllocator *allocator;
 	
 	T &operator* () {
-	    T *buf = reinterpret_cast<T *>(static_cast<u8 *>(allocator.backing_buf) + offset);
+	    T *buf = reinterpret_cast<T *>(static_cast<u8 *>(allocator->backing_buf) + offset);
 	    return *buf;
 	}
 	
@@ -57,7 +57,7 @@ struct SlabAllocator {
     template<typename T>
     Pointer<T> alloc() {
 	u64 offset_bytes = alloc_raw();
-	return {offset_bytes, *this};
+	return {offset_bytes, this};
     }
 
     void free(void *ptr);
